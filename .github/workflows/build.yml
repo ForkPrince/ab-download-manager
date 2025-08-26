@@ -9,38 +9,30 @@ on:
         type: string
 
 jobs:
-  build:
-    runs-on: windows-11-arm
+    build:
+      runs-on: windows-11-arm
+  
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v5
+          with:
+            repository: amir1376/ab-download-manager
+            ref: ${{ github.event.inputs.tag }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          repository: amir1376/ab-download-manager
-          ref: ${{ github.event.inputs.tag }}
+        - name: Setup JBR
+          uses: actions/setup-java@v5
+          with:
+             distribution: ‘jetbrains’
+             java-version: '21'
 
-      - name: Download JBR
-        run: |
-          curl -L -o jbr.zip "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.8-windows-aarch64-b895.146.zip"
-          mkdir jbr
-          tar -xf jbr.zip -C jbr --strip-components=1
-
-      - name: Set JAVA_HOME and update PATH
-        run: |
-          echo "JAVA_HOME=${{ github.workspace }}\\jbr" >> $env:GITHUB_ENV
-          echo "${{ github.workspace }}\\jbr\\bin" >> $env:GITHUB_PATH
-
-      - name: Verify Java
-        run: java -version
-
-      - name: Ensure gradlew is executable
-        run: git update-index --chmod=+x gradlew
-
-      - name: Run Gradle task
-        run: .\gradlew createReleaseFolderForCi
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-release
-          path: build/ci-release
+        - name: Ensure gradlew is executable
+          run: git update-index --chmod=+x gradlew
+  
+        - name: Run Gradle task
+          run: .\gradlew createReleaseFolderForCi
+  
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: ci-release
+            path: build/ci-release
