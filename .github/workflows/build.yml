@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repo: amir1376/ab-download-manager
+          repository: amir1376/ab-download-manager
           ref: ${{ github.event.inputs.tag }}
 
       - name: Download JBR
