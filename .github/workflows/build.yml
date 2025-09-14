@@ -1,0 +1,30 @@
+name: Build App
+
+on:
+  workflow_dispatch:
+
+jobs:
+    build:
+      runs-on: windows-11-arm
+  
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Setup JBR
+          uses: actions/setup-java@v4
+          with:
+             distribution: 'jetbrains'
+             java-version: '21'
+
+        - name: Ensure gradlew is executable
+          run: git update-index --chmod=+x gradlew
+  
+        - name: Run Gradle task
+          run: .\gradlew createReleaseFolderForCi
+  
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: ci-release
+            path: build/ci-release
