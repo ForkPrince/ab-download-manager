@@ -186,15 +186,6 @@ private fun defaultApp(
     val customRenderApiRequested = System.getenv("SKIKO_RENDER_API") != null ||
             System.getProperty("skiko.renderApi") != null
 
-    if (!customRenderApiRequested) {
-        if (Platform.isWindows()) {
-            // At the moment default render api have some problems on windows!
-            // - when I resize a window, the contents of the window will be stretched
-            // - sometimes when I close a window, the window flashes on exiting
-            // it seems OPENGL does not have these problems
-            System.setProperty("skiko.renderApi", "OPENGL")
-        }
-    }
     val globalExceptionHandler = createAndSetGlobalExceptionHandler()
     App().use {
         it.start(
