@@ -22,6 +22,7 @@ jobs:
           run: git update-index --chmod=+x gradlew
   
         - name: Run Gradle task
+          shell: bash
           run: .\gradlew createReleaseFolderForCi
   
         - name: Upload build artifacts
