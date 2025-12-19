@@ -14,8 +14,9 @@ jobs:
         - name: Setup JBR
           uses: actions/setup-java@v4
           with:
-             distribution: 'jetbrains'
-             java-version: '21'
+            distribution: "jetbrains"
+            java-package: "jdk"
+            java-version: "21"
 
         - name: Ensure gradlew is executable
           run: git update-index --chmod=+x gradlew
