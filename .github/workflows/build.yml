@@ -18,6 +18,11 @@ jobs:
             java-package: "jdk"
             java-version: "21"
 
+        - name: Skip Android build
+          shell: "bash"
+          run: |
+            echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
+
         - name: Ensure gradlew is executable
           run: git update-index --chmod=+x gradlew
   
