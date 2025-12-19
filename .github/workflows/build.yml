@@ -23,7 +23,7 @@ jobs:
   
         - name: Run Gradle task
           shell: bash
-          run: .\gradlew createReleaseFolderForCi
+          run: ./gradlew createReleaseFolderForCi
   
         - name: Upload build artifacts
           uses: actions/upload-artifact@v4
