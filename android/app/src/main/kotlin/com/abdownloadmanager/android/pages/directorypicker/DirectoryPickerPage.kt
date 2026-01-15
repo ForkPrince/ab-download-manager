@@ -57,6 +57,7 @@ import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.compose.resources.myStringResource
 import ir.amirab.util.createDirectories
 import ir.amirab.util.exists
+import ir.amirab.util.isDirectory
 import ir.amirab.util.listFiles
 import ir.amirab.util.listFilesOrNull
 import ir.amirab.util.startsWith
@@ -65,7 +66,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okio.Path
 import okio.Path.Companion.toOkioPath
-import kotlin.system.exitProcess
 
 val alwaysAllowedPaths = listOf(
     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toOkioPath(),
@@ -113,7 +113,11 @@ fun DirectoryPicker(
             val weHaveFullAccess = storagePermissionState.isGranted
             DirectoryList(
                 currentDirectory = currentDirectory,
-                directories = runCatching { currentDirectory.listFiles() }
+                directories = runCatching {
+                    currentDirectory
+                        .listFiles()
+                        .filter { it.isDirectory() }
+                }
                     .getOrNull()
                     .orEmpty()
                     .map {
@@ -158,7 +162,7 @@ fun DirectoryPicker(
                     headerActions = {
                         TransparentIconActionButton(
                             MyIcons.close,
-                            contentDescription = myStringResource(Res.string.close),
+                            contentDescription = Res.string.close.asStringSource(),
                             onClick = onDismiss
                         )
                     }
@@ -269,7 +273,7 @@ fun DirectoryPicker(
                         Spacer(Modifier.width(mySpacings.mediumSpace))
                         IconActionButton(
                             MyIcons.add,
-                            contentDescription = myStringResource(Res.string.new_folder),
+                            contentDescription = Res.string.new_folder.asStringSource(),
                             enabled = directoryList.currentDirectoryCanWrite,
                         ) {
                             creatingNewFolder = true

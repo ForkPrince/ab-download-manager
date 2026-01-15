@@ -40,10 +40,6 @@ import kotlinx.coroutines.selects.select
 import org.koin.core.component.inject
 import kotlin.getValue
 
-sealed interface AddSingleDownloadPageEffects {
-    data class SuggestUrl(val link: String) : AddSingleDownloadPageEffects
-}
-
 abstract class BaseAddSingleDownloadComponent(
     ctx: ComponentContext,
     val onRequestClose: () -> Unit,
@@ -63,10 +59,10 @@ abstract class BaseAddSingleDownloadComponent(
     protected val queueManager: QueueManager,
     importOptions: ImportOptions,
     id: String,
-    downloaderInUi: DownloaderInUi<IDownloadCredentials, *, *, *, *, *, *, *, *>,
+    downloaderInUi: DownloaderInUi<IDownloadCredentials, *, *, *, *, *, *, *, *, *>,
     initialCredentials: AddDownloadCredentialsInUiProps,
 ) : AddDownloadComponent(ctx, id, lastSavedLocationsStorage),
-    ContainsEffects<AddSingleDownloadPageEffects> by supportEffects() {
+    ContainsEffects<BaseAddSingleDownloadComponent.Effects> by supportEffects() {
     private val _shouldShowWindow = MutableStateFlow(importOptions.silentImport == null)
     override val shouldShowWindow: StateFlow<Boolean> = _shouldShowWindow.asStateFlow()
     val downloadInputsComponent = downloaderInUi.createNewDownloadInputs(
@@ -449,6 +445,13 @@ abstract class BaseAddSingleDownloadComponent(
                 _shouldShowWindow.value = true
             }
         }
+    }
+    sealed interface Effects {
+        sealed interface Common : Effects {
+            data class SuggestUrl(val link: String) : Common
+        }
+
+        interface Platform : Effects
     }
 }
 

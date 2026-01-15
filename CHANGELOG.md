@@ -14,6 +14,72 @@
 
 ### Security
 
+## 1.8.4
+
+### Added
+
+- In-app browser for Android
+- The Android service now tells the user why it is running
+- The Add-Multi-Download page can now filter downloads using search and wildcards
+
+### Fixed
+
+- Random app crashes on some Android devices caused by service-related issues
+- Issues with the in-app update feature on some Android devices
+
+### Improved
+
+- Updated translations
+- The Android Foreground Service is now only used when necessary (active downloads, active queues, scheduled queues) and
+  automatically stops after inactivity
+- Add-Multi-Download page UI/UX improvements
+
+## 1.8.3
+
+### Added
+
+- Ability to sort and remove queue items on Android (#996)
+- A new shortcut to open the download list from the download progress dialog (#1001)
+
+### Fixed
+
+- Download table state not saved properly on desktop (#999)
+- Update related notifications appearing repeatedly on android (#998)
+
+### Improved
+
+- Updated translations
+- Settings Page UI improvements on android (#990)
+
+## 1.8.2
+
+### Fixed
+
+- Resolved issues with the In-App update feature on some android devices
+- Disabled notification badges on the launcher icon on android
+- The application crashes on some devices (desktops) because of an issue in system theme detection logic
+
+### Improved
+
+- Updated translations
+- Added tooltips for action buttons
+- Display selected count in the "Add Multi Download" page on desktop (#970)
+- Reduced battery consumption
+- Various UI/UX enhancements
+
+## 1.8.1
+
+### Fixed
+
+- Android 10 storage access issue that caused download errors (#977)
+
+### Improved
+
+- Updated translations
+- Better support for adaptive icons on Android (#978)
+- Improved directory picker on Android (#979)
+- Slightly reduced application size
+
 ## 1.8.0
 
 ### Added

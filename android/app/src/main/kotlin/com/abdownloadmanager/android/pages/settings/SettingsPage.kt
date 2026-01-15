@@ -21,10 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.abdownloadmanager.android.ui.page.FooterFade
@@ -38,6 +35,7 @@ import com.abdownloadmanager.shared.ui.widget.TransparentIconActionButton
 import com.abdownloadmanager.shared.util.ui.VerticalScrollableContent
 import com.abdownloadmanager.shared.util.ui.icon.MyIcons
 import com.abdownloadmanager.shared.util.ui.myColors
+import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.compose.resources.myStringResource
 
 
@@ -72,7 +70,7 @@ fun SettingsPage(
                 leadingIcon = {
                     TransparentIconActionButton(
                         icon = MyIcons.back,
-                        contentDescription = myStringResource(Res.string.back),
+                        contentDescription = Res.string.back.asStringSource(),
                         onClick = {
                             backDispatcher?.onBackPressedDispatcher?.onBackPressed()
                         }

@@ -39,6 +39,7 @@ kotlin {
             api(libs.kotlin.serialization.json)
 
             api(libs.decompose)
+            api(libs.essenty.lifecycleCoroutines)
             api(libs.koin.core)
 
             api(libs.androidx.datastore)
@@ -52,7 +53,6 @@ kotlin {
             api(libs.fastscroller.core)
             api(libs.markdownRenderer.core)
             api(libs.compose.reorderable)
-            api(libs.composeFileKit)
         }
         androidMain.dependencies {
             api(libs.androidx.core.ktx)

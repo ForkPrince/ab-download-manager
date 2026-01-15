@@ -2,10 +2,13 @@ package com.abdownloadmanager.android.pages.home
 
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
+import com.abdownloadmanager.android.action.createOpenBrowserAction
 import com.abdownloadmanager.android.pages.enterurl.AndroidEnterNewURLComponent
 import com.abdownloadmanager.android.pages.home.sections.sort.DownloadSortBy
 import com.abdownloadmanager.android.storage.HomePageStorage
 import com.abdownloadmanager.android.util.AppInfo
+import com.abdownloadmanager.android.util.pagemanager.IBrowserPageManager
 import com.abdownloadmanager.resources.Res
 import com.abdownloadmanager.shared.action.createCheckForUpdateAction
 import com.abdownloadmanager.shared.action.createDownloadFromClipboardAction
@@ -64,6 +67,7 @@ import ir.amirab.downloader.downloaditem.DownloadJobStatus
 import ir.amirab.downloader.monitor.CompletedDownloadItemState
 import ir.amirab.downloader.monitor.IDownloadItemState
 import ir.amirab.downloader.monitor.ProcessingDownloadItemState
+import ir.amirab.downloader.queue.DownloadQueue
 import ir.amirab.downloader.queue.QueueManager
 import ir.amirab.downloader.queue.activeQueuesFlow
 import ir.amirab.util.compose.action.buildMenu
@@ -76,6 +80,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.collections.plus
 
 class HomeComponent(
     componentContext: ComponentContext,
@@ -94,6 +99,7 @@ class HomeComponent(
     translatorsPageManager: TranslatorsPageManager,
     settingsPageManager: SettingsPageManager,
     perHostSettingsPageManager: PerHostSettingsPageManager,
+    browserPageManager: IBrowserPageManager,
     aboutPageManager: AboutPageManager,
     batchDownloadPageManager: BatchDownloadPageManager,
     defaultCategories: DefaultCategories,
@@ -166,7 +172,7 @@ class HomeComponent(
         categoryManager = categoryManager,
         openFile = ::openFile,
         requestDelete = ::requestDelete,
-        onRequestShareFiles = ::shareFiles
+        onRequestShareFiles = ::shareFiles,
     )
 
     private fun shareFiles(finishedDownloads: List<CompletedDownloadItemState>) {
@@ -212,11 +218,33 @@ class HomeComponent(
         }
     }
 
+    val filterMode = derivedStateOf {
+        val queueFilter = filterState.queueFilter
+        val statusFilter = filterState.statusFilter
+        val categoryFilter = filterState.typeCategoryFilter
+        if (queueFilter != null) {
+            FilterMode.Queue(queueFilter)
+        } else {
+            FilterMode.Status(statusFilter, categoryFilter)
+        }
+    }
+
     val sortedDownloadList = combine(
         downloadList,
         selectedSort,
-    ) { downloadList, sortBy ->
-        sortBy.sorted(downloadList)
+        snapshotFlow { filterMode.value },
+    ) { downloadList, sortBy, filterMode ->
+        when (filterMode) {
+            is FilterMode.Status -> {
+                sortBy.sorted(downloadList)
+            }
+
+            is FilterMode.Queue -> {
+                filterMode.queue.queueItems.mapNotNull { id ->
+                    downloadList.find { it.id == id }
+                }
+            }
+        }
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     fun onRequestSelectInside() {
@@ -305,9 +333,11 @@ class HomeComponent(
     }
 
 
-    val activeQueuesFlow = queueManager.activeQueuesFlow(scope)
+    val activeQueuesFlow = queueManager.activeQueuesFlow()
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
     val mainMenu = buildMenu {
+        +createOpenBrowserAction(browserPageManager = browserPageManager)
+        separator()
         +createStopAllAction(scope, downloadSystem, {}, activeQueuesFlow)
         separator()
         subMenu(
@@ -382,14 +412,73 @@ class HomeComponent(
         }
     }
 
-    val filterMode = derivedStateOf {
-        val queueFilter = filterState.queueFilter
-        val statusFilter = filterState.statusFilter
-        val categoryFilter = filterState.typeCategoryFilter
-        if (queueFilter != null) {
-            FilterMode.Queue(queueFilter)
+    private fun getCurrentDownloadQueue(): DownloadQueue? {
+        val queueId = (filterMode.value as? FilterMode.Queue)?.queue?.id ?: return null
+        return runCatching { queueManager.getQueue(queueId) }.getOrNull()
+    }
+
+    fun reorderQueueItemsUp() {
+        val downloadQueue = getCurrentDownloadQueue() ?: return
+        val itemsToMove = selectionList.value
+        downloadQueue.moveUp(itemsToMove)
+        val queueItems = downloadQueue.queueModel.value.queueItems
+        val firstItemId = queueItems.firstOrNull { itemsToMove.contains(it) }
+        firstItemId?.let {
+            scope.launch {
+                sendEffect(BaseHomeComponent.Effects.Common.ScrollToDownloadItem(it, true))
+            }
+        }
+    }
+
+    fun reorderQueueItemsDown() {
+        val downloadQueue = getCurrentDownloadQueue() ?: return
+        val itemsToMove = selectionList.value
+        downloadQueue.moveDown(itemsToMove)
+        val queueItems = downloadQueue.queueModel.value.queueItems
+        val lastItemId = queueItems.lastOrNull { itemsToMove.contains(it) }
+        lastItemId?.let {
+            sendEffect(BaseHomeComponent.Effects.Common.ScrollToDownloadItem(it, true))
+        }
+    }
+
+    fun reorderQueueItems(fromIndex: Int, toIndex: Int) {
+        val downloadQueue = getCurrentDownloadQueue() ?: return
+        val currentDraggingItem = runCatching {
+            downloadQueue.getQueueItemFromOrder(fromIndex)
+        }.getOrNull()
+        val listOfIds = selectionList.value
+            .let {
+                if (currentDraggingItem != null && !it.contains(currentDraggingItem)) {
+                    it.plus(currentDraggingItem)
+                } else {
+                    it
+                }
+            }
+
+        val delta = toIndex - fromIndex
+        downloadQueue.move(
+            listOfIds, delta
+        )
+        val queueItems = downloadQueue.queueModel.value.queueItems
+        val itemToScroll = if (delta > 0) {
+            queueItems.lastOrNull { listOfIds.contains(it) }
         } else {
-            FilterMode.Status(statusFilter, categoryFilter)
+            queueItems.firstOrNull { listOfIds.contains(it) }
+        }
+        itemToScroll?.let {
+            sendEffect(BaseHomeComponent.Effects.Common.ScrollToDownloadItem(it))
+        }
+    }
+
+    fun removeQueueItems() {
+        val downloadQueue = getCurrentDownloadQueue() ?: return
+        val itemsToRemove = selectionList.value
+        downloadQueue.removeFromQueue(itemsToRemove)
+    }
+
+    fun revealItem(downloadId: Long) {
+        scope.launch {
+            sendEffect(BaseHomeComponent.Effects.Common.ScrollToDownloadItem(downloadId))
         }
     }
 
@@ -406,6 +495,7 @@ class HomeComponent(
             val queue: QueueModel,
         ) : FilterMode
     }
+
     sealed interface Effects : BaseHomeComponent.Effects.PlatformEffects {
         data class ShareFiles(
             val files: List<File>,

@@ -1,5 +1,7 @@
 package com.abdownloadmanager.android.util.activity
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -28,6 +30,7 @@ import com.arkivanov.decompose.retainedComponent
 import ir.amirab.util.compose.IIconResolver
 import ir.amirab.util.compose.localizationmanager.LanguageManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.getValue
@@ -45,6 +48,13 @@ abstract class ABDMActivity : ComponentActivity(), KoinComponent {
     val onBoardingStorage: AndroidOnBoardingStorage by inject()
     val homePageStorage: HomePageStorage by inject()
 
+    open fun handleIntent(intent: Intent) {}
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidUi.boot()
@@ -59,6 +69,14 @@ abstract class ABDMActivity : ComponentActivity(), KoinComponent {
             statusBarStyle = systemBarStyle,
             navigationBarStyle = systemBarStyle,
         )
+        if (savedInstanceState == null) {
+            handleIntent(intent)
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        abdmAppManager.bootDownloadSystemAndService()
     }
 
     @Composable

@@ -27,12 +27,12 @@ import com.abdownloadmanager.shared.util.mvi.HandleEffects
 import com.abdownloadmanager.resources.Res
 import com.abdownloadmanager.shared.downloaderinui.add.CanAddResult
 import com.abdownloadmanager.shared.pages.adddownload.single.BaseAddSingleDownloadComponent
-import com.abdownloadmanager.shared.pages.adddownload.single.AddSingleDownloadPageEffects
 import com.abdownloadmanager.shared.util.ClipboardUtil
 import com.abdownloadmanager.shared.util.div
 import com.abdownloadmanager.shared.util.ui.theme.myShapes
 import ir.amirab.util.compose.resources.myStringResource
 import ir.amirab.downloader.utils.OnDuplicateStrategy
+import ir.amirab.util.compose.asStringSource
 import java.awt.MouseInfo
 
 @Composable
@@ -54,8 +54,16 @@ fun AddDownloadPage(
 
         HandleEffects(component) {
             when (it) {
-                is AddSingleDownloadPageEffects.SuggestUrl -> {
-                    setLink(it.link)
+                is BaseAddSingleDownloadComponent.Effects.Common -> {
+                    when (it) {
+                        is BaseAddSingleDownloadComponent.Effects.Common.SuggestUrl -> {
+                            setLink(it.link)
+                        }
+                    }
+                }
+
+                is BaseAddSingleDownloadComponent.Effects.Platform -> {
+                    // support platform effects if any
                 }
             }
         }
@@ -406,13 +414,13 @@ private fun MainConfigActionButton(
 fun ConfigActionsButtons(component: BaseAddSingleDownloadComponent) {
     val responseInfo by component.linkResponseInfo.collectAsState()
     Row {
-        IconActionButton(MyIcons.refresh, myStringResource(Res.string.refresh)) {
+        IconActionButton(MyIcons.refresh, Res.string.refresh.asStringSource()) {
             component.refresh()
         }
         Spacer(Modifier.width(6.dp))
         IconActionButton(
             MyIcons.settings,
-            myStringResource(Res.string.settings),
+            Res.string.settings.asStringSource(),
             indicateActive = component.showMoreSettings,
             requiresAttention = responseInfo?.requireBasicAuth ?: false
         ) {

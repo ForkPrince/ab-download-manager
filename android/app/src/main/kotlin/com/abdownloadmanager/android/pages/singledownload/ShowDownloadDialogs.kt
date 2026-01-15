@@ -15,7 +15,7 @@ import com.abdownloadmanager.shared.util.ui.icon.MyIcons
 import ir.amirab.downloader.monitor.CompletedDownloadItemState
 import ir.amirab.downloader.monitor.IDownloadItemState
 import ir.amirab.downloader.monitor.ProcessingDownloadItemState
-import ir.amirab.util.compose.resources.myStringResource
+import ir.amirab.util.compose.asStringSource
 import kotlinx.coroutines.delay
 
 @Composable
@@ -31,7 +31,10 @@ private fun getDownloadTitle(itemState: IDownloadItemState): String {
 
 
 @Composable
-fun ShowDownloadDialog(singleDownloadComponent: AndroidSingleDownloadComponent) {
+fun ShowDownloadDialog(
+    singleDownloadComponent: AndroidSingleDownloadComponent,
+    onRequestShowInDownloads: () -> Unit,
+) {
     val itemState by singleDownloadComponent.itemStateFlow.collectAsState()
     val dialogState = rememberResponsiveDialogState(false)
     dialogState.OnFullyDismissed {
@@ -54,9 +57,16 @@ fun ShowDownloadDialog(singleDownloadComponent: AndroidSingleDownloadComponent) 
                         SheetTitle(getDownloadTitle(downloadItemState))
                     },
                     headerActions = {
+                        if (singleDownloadComponent.comesFromExternalApplication) {
+                            TransparentIconActionButton(
+                                MyIcons.externalLink,
+                                contentDescription = Res.string.show_downloads.asStringSource(),
+                                onClick = onRequestShowInDownloads,
+                            )
+                        }
                         TransparentIconActionButton(
                             MyIcons.close,
-                            contentDescription = myStringResource(Res.string.close),
+                            contentDescription = Res.string.close.asStringSource(),
                             onClick = closeDialog
                         )
                     }
